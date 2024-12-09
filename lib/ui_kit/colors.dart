@@ -11,4 +11,11 @@ abstract class AppColors {
   static const green = Color(0xFF3BB273);
   static const yellow = Color(0xFFE1BC29);
   static const red = Color(0xFFE15554);
+
+  static const moodsColors = [
+    yellow,
+    purple,
+    red,
+    green,
+  ];
 }

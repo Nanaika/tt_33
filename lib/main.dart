@@ -5,6 +5,7 @@ import 'package:flutter_app_info/flutter_app_info.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:tt33/bloc/moods_bloc.dart';
+import 'package:tt33/pages/create_mood_page.dart';
 import 'package:tt33/pages/create_trigger_list_page.dart';
 import 'package:tt33/pages/home_page.dart';
 import 'package:tt33/pages/onboarding_page.dart';
@@ -79,6 +80,11 @@ class MyApp extends StatelessWidget {
             settings: settings,
             builder: (context) => const CreateTriggerListPage(),
           ),
+          AppRoutes.createMood => CupertinoPageRoute(
+            settings: settings,
+            builder: (context) => const CreateMoodPage(),
+          ),
+
           _ => null,
         },
         home: SplashPage(

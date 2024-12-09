@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tt33/bloc/moods_state.dart';
 
 import '../storages/isar.dart';
+import '../storages/models/mood.dart';
 import '../storages/models/trigger.dart';
 
 class MoodsBloc extends Cubit<MoodsState> {
-  MoodsBloc() : super(MoodsState(triggers: [])) {
+  MoodsBloc() : super(MoodsState(triggers: [], moods: [])) {
     getTriggers();
+    getMoods();
+    getTodayMood();
   }
 
   Future<void> getTriggers() async {
@@ -24,6 +27,33 @@ class MoodsBloc extends Cubit<MoodsState> {
     await AppIsarDatabase.addTrigger(trigger);
     await getTriggers();
   }
+
+  Future<void> addMood(Mood mood) async {
+    await AppIsarDatabase.addMood(mood);
+    await getMoods();
+    await getTodayMood();
+
+  }
+
+  Future<void> getMoods() async {
+    final moods = await AppIsarDatabase.getMoods(
+    );
+    emit(
+      state.copyWith(
+        moods: moods,
+      ),
+    );
+  }
+
+  Future<void> getTodayMood() async {
+    final todayMood = await AppIsarDatabase.getTodayMood(
+    );
+    emit(
+      state.copyWith(
+        todayMood: todayMood,
+      ),
+    );
+  }
   //
   // Future<void> deleteTask(int id) async {
   //   await AppIsarDatabase.deleteTask(id);
@@ -38,6 +68,7 @@ class MoodsBloc extends Cubit<MoodsState> {
   void updatePage(int index) {
     emit(state.copyWith(page: index));
   }
+
   //
   // Future<void> updateTaskType(int index) async {
   //   emit(state.copyWith(taskType: index));

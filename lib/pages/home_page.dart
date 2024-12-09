@@ -40,7 +40,7 @@ class HomePage extends StatelessWidget {
               left: 0,
               right: 0,
               child: Container(
-                height: 100,
+                // height: 100,
                 padding:
                     EdgeInsets.only(left: 44, right: 44, top: 10, bottom: 12 + MediaQuery.of(context).padding.bottom),
                 decoration: BoxDecoration(

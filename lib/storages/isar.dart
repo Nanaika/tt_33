@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:tt33/storages/models/mood.dart';
 
 import 'models/trigger.dart';
 
@@ -9,7 +10,7 @@ abstract class AppIsarDatabase {
   static Future<Isar> init() async {
     final dir = await getApplicationDocumentsDirectory();
     return _instance = await Isar.open(
-      [TriggerSchema],
+      [TriggerSchema, MoodSchema],
       directory: dir.path,
     );
   }
@@ -17,13 +18,29 @@ abstract class AppIsarDatabase {
   static Future<void> addTrigger(Trigger trigger) async {
     await _instance.writeTxn(() async => await _instance.triggers.put(trigger));
   }
-//
-  static Future<List<Trigger>> getTriggers(
-  ) async {
+
+  static Future<List<Trigger>> getTriggers() async {
     return await _instance.writeTxn(
-      () async => await _instance.triggers
-          .where()
-          .findAll(),
+      () async => await _instance.triggers.where().findAll(),
+    );
+  }
+
+  static Future<void> addMood(Mood mood) async {
+    await _instance.writeTxn(() async => await _instance.moods.put(mood));
+  }
+
+  static Future<List<Mood>> getMoods() async {
+    return await _instance.writeTxn(
+      () async => await _instance.moods.where().sortByDate().findAll(),
+    );
+  }
+
+  static Future<Mood?> getTodayMood() async {
+    return await _instance.writeTxn(
+      () async => await _instance.moods
+          .filter()
+          .dateEqualTo(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
+          .findFirst(),
     );
   }
 //
