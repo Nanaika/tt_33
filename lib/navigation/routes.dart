@@ -5,4 +5,5 @@ abstract class AppRoutes {
   static const editMood = '/editMood';
   static const createMood = '/createMood';
   static const createTriggerList = '/createTriggerList';
+  static const aboutUs = '/aboutUs';
 }

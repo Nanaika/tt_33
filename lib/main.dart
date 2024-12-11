@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_app_info/flutter_app_info.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:pull_down_button/pull_down_button.dart';
 import 'package:tt33/bloc/moods_bloc.dart';
+import 'package:tt33/pages/about_us_page.dart';
 import 'package:tt33/pages/create_mood_page.dart';
 import 'package:tt33/pages/create_trigger_list_page.dart';
 import 'package:tt33/pages/home_page.dart';
@@ -13,6 +15,8 @@ import 'package:tt33/pages/splash_page.dart';
 import 'package:tt33/remote_config.dart';
 import 'package:tt33/storages/isar.dart';
 import 'package:tt33/storages/shared_preferences.dart';
+import 'package:tt33/ui_kit/colors.dart';
+import 'package:tt33/ui_kit/text_styles.dart';
 
 import 'navigation/routes.dart';
 
@@ -63,6 +67,21 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
+          extensions: [
+            PullDownButtonTheme(
+                routeTheme: PullDownMenuRouteTheme(
+                  backgroundColor: AppColors.white,
+                ),
+                itemTheme: PullDownMenuItemTheme(
+                  destructiveColor: Colors.red,
+                ),
+                dividerTheme: PullDownMenuDividerTheme(
+                  dividerColor: AppColors.black,
+                ),
+                titleTheme: PullDownMenuTitleTheme(
+                  style: AppStyles.displaySmall,
+                )),
+          ],
         ),
         onUnknownRoute: (settings) => CupertinoPageRoute(
           builder: (context) => const HomePage(),
@@ -77,14 +96,17 @@ class MyApp extends StatelessWidget {
               builder: (context) => const HomePage(),
             ),
           AppRoutes.createTriggerList => CupertinoPageRoute(
-            settings: settings,
-            builder: (context) => const CreateTriggerListPage(),
-          ),
+              settings: settings,
+              builder: (context) => const CreateTriggerListPage(),
+            ),
           AppRoutes.createMood => CupertinoPageRoute(
-            settings: settings,
-            builder: (context) => const CreateMoodPage(),
-          ),
-
+              settings: settings,
+              builder: (context) => const CreateMoodPage(),
+            ),
+          AppRoutes.aboutUs => CupertinoPageRoute(
+              settings: settings,
+              builder: (context) => const AboutUsPage(),
+            ),
           _ => null,
         },
         home: SplashPage(

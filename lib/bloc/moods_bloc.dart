@@ -10,7 +10,6 @@ class MoodsBloc extends Cubit<MoodsState> {
   MoodsBloc() : super(MoodsState(triggers: [], moods: [])) {
     getTriggers();
     getMoods();
-    getTodayMood();
   }
 
   Future<void> getTriggers() async {
@@ -29,9 +28,15 @@ class MoodsBloc extends Cubit<MoodsState> {
   }
 
   Future<void> addMood(Mood mood) async {
+    print('ADD MOOD from BLOC ----------------  ${mood.id}');
     await AppIsarDatabase.addMood(mood);
     await getMoods();
-    await getTodayMood();
+
+  }
+
+  Future<void> updateMood(Mood mood, int id) async {
+    await AppIsarDatabase.updateMood(mood, id);
+    await getMoods();
 
   }
 
@@ -45,15 +50,7 @@ class MoodsBloc extends Cubit<MoodsState> {
     );
   }
 
-  Future<void> getTodayMood() async {
-    final todayMood = await AppIsarDatabase.getTodayMood(
-    );
-    emit(
-      state.copyWith(
-        todayMood: todayMood,
-      ),
-    );
-  }
+
   //
   // Future<void> deleteTask(int id) async {
   //   await AppIsarDatabase.deleteTask(id);

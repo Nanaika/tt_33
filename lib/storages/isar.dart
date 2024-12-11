@@ -26,23 +26,27 @@ abstract class AppIsarDatabase {
   }
 
   static Future<void> addMood(Mood mood) async {
+    print('OLDMOOD ID---------------  ${mood.id}');
     await _instance.writeTxn(() async => await _instance.moods.put(mood));
+  }
+
+  static Future<void> updateMood(Mood mood, int id) async {
+    final old = await _instance.moods.get(id);
+    if (old != null) {
+      old.type = mood.type;
+      old.reasons = mood.reasons;
+      old.comment = mood.comment;
+
+      await _instance.writeTxn(() async => await _instance.moods.put(old));
+    }
   }
 
   static Future<List<Mood>> getMoods() async {
     return await _instance.writeTxn(
-      () async => await _instance.moods.where().sortByDate().findAll(),
+      () async => await _instance.moods.where().sortByDateDesc().findAll(),
     );
   }
 
-  static Future<Mood?> getTodayMood() async {
-    return await _instance.writeTxn(
-      () async => await _instance.moods
-          .filter()
-          .dateEqualTo(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
-          .findFirst(),
-    );
-  }
 //
 //   static Future<void> addTask(Task task) async {
 //     await _instance.writeTxn(() async => await _instance.tasks.put(task));

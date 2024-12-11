@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:tt33/bloc/moods_bloc.dart';
 import 'package:tt33/bloc/moods_state.dart';
 import 'package:tt33/navigation/routes.dart';
+import 'package:tt33/pages/create_mood_page_view.dart';
 import 'package:tt33/ui_kit/text_styles.dart';
 import 'package:tt33/ui_kit/widgets/app_elevated_button.dart';
 import 'package:tt33/utils/assets_paths.dart';
@@ -31,15 +32,10 @@ class _HomePageViewState extends State<HomePageView> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = DateUtils.dateOnly(DateTime.now());
+    final start = now.subtract(Duration(days: 3));
     List<DateTime> dates = List.generate(7, (index) {
-      if (index < 3) {
-        return now.subtract(Duration(days: 3 - index)); // 3 дня назад
-      } else if (index == 3) {
-        return now; // Сегодня
-      } else {
-        return now.add(Duration(days: index - 3)); // 3 дня вперед
-      }
+      return start.add(Duration(days: index));
     });
     return Container(
       color: AppColors.background,
@@ -50,12 +46,29 @@ class _HomePageViewState extends State<HomePageView> {
               padding: EdgeInsets.only(top: 20.0 + MediaQuery.of(context).padding.top),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 13),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.max,
-                  children: List.generate(7, (index) {
-                    return WeekDayTile(date: dates[index]);
-                  }),
+                child: BlocSelector<MoodsBloc, MoodsState, List<Mood>>(
+                  selector: (MoodsState state) {
+                    return state.moods;
+                  },
+                  builder: (BuildContext context, List<Mood> state) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.max,
+                      children: List.generate(7, (index) {
+                        Mood? mood;
+                        try {
+                          mood = state.firstWhere((mood) => mood.date == dates[index]);
+                        } catch (e) {
+                          mood = null;
+                        }
+
+                        return WeekDayTile(
+                          date: dates[index],
+                          mood: mood,
+                        );
+                      }),
+                    );
+                  },
                 ),
               ),
             ),
@@ -66,49 +79,30 @@ class _HomePageViewState extends State<HomePageView> {
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Today, I am',
-                        style: AppStyles.displayMedium,
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                  BlocSelector<MoodsBloc, MoodsState, Mood?>(
+                  BlocSelector<MoodsBloc, MoodsState, List<Mood>>(
                     selector: (MoodsState state) {
-                      return state.todayMood;
+                      return state.moods;
                     },
-                    builder: (context, todayMood) {
-                      return MoodsTileTable(
-                        selectedItem: _selectedMoodType,
-                        onHappyTap: () {
-                          setSelectedMoodType(0);
-                        },
-                        onSadTap: () {
-                          setSelectedMoodType(1);
-                        },
-                        onAngryTap: () {
-                          setSelectedMoodType(2);
-                        },
-                        onAnxietyTap: () {
-                          setSelectedMoodType(3);
-                        },
-                      );
+                    builder: (BuildContext context, List<Mood> state) {
+                      final todayExist;
+                      if (state.isNotEmpty) {
+                        todayExist = state.first.date == DateUtils.dateOnly(DateTime.now());
+                      } else {
+                        todayExist = false;
+                      }
+                      if (todayExist) {
+                        return TodayExistView(
+                          mood: state.first,
+                        );
+                      } else {
+                        return TodayNotExistView(
+                          selectedMoodType: _selectedMoodType,
+                          onSelected: (index) {
+                            setSelectedMoodType(index);
+                          },
+                        );
+                      }
                     },
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  AppElevatedButton(
-                    buttonText: 'Go next',
-                    height: 50,
-                    onTap: () {
-                      Navigator.of(context).pushNamed(AppRoutes.createMood, arguments: _selectedMoodType);
-                    },
-                    isActive: _selectedMoodType != -1,
                   ),
                   SizedBox(
                     height: 30,
@@ -215,10 +209,177 @@ class _HomePageViewState extends State<HomePageView> {
   }
 }
 
-void saveMood(BuildContext context, MoodType type, List<String> reasons) {
-  final mood =
-      Mood(date: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day), type: type, reasons: reasons);
-  context.read<MoodsBloc>().addMood(mood);
+class TodayExistView extends StatelessWidget {
+  const TodayExistView({
+    super.key,
+    required this.mood,
+  });
+
+  final Mood mood;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.black,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              SelectMoodRow(
+                index: mood.type.index,
+                onIndexChanged: (index) {
+                  mood.type = MoodType.values[index];
+                  context.read<MoodsBloc>().updateMood(mood, mood.id);
+                },
+              ),
+              SizedBox(
+                height: 8,
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Because:',
+                    style: AppStyles.displaySmall.copyWith(color: AppColors.white),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 8,
+              ),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  runAlignment: WrapAlignment.start,
+                  crossAxisAlignment: WrapCrossAlignment.start,
+                  runSpacing: 4,
+                  spacing: 4,
+                  children: List.generate(
+                    mood.reasons.length,
+                    (index) => CustomChip(
+                      text: mood.reasons[index],
+                      backColor: AppColors.black,
+                      textColor: AppColors.white,
+                      iconColor: AppColors.white,
+                      onRemove: () {
+                       final copy = mood.reasons.toList();
+                       copy.removeAt(index);
+                       final newMood = mood.copyWith(reasons: copy);
+                       context.read<MoodsBloc>().updateMood(newMood, mood.id);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 8,
+              ),
+              Row(
+                children: [
+                  Text(
+                    'My comment:',
+                    style: AppStyles.displaySmall.copyWith(color: AppColors.white),
+                  )
+                ],
+              ),
+              SizedBox(
+                height: 8,
+              ),
+              if (mood.comment != '')
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Text(
+                    mood.comment,
+                    style: AppStyles.bodySmall,
+                  ),
+                )
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        AppElevatedButton(
+          buttonText: 'Edit',
+          height: 50,
+          onTap: () {
+            Navigator.of(context).pushNamed(AppRoutes.createMood, arguments: mood);
+          },
+          isActive: true,
+        ),
+      ],
+    );
+  }
+}
+
+class TodayNotExistView extends StatelessWidget {
+  const TodayNotExistView({
+    super.key,
+    required int selectedMoodType,
+    required this.onSelected,
+  }) : _selectedMoodType = selectedMoodType;
+
+  final int _selectedMoodType;
+  final void Function(int index) onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Text(
+              'Today, I am',
+              style: AppStyles.displayMedium,
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 15,
+        ),
+        MoodsTileTable(
+          selectedItem: _selectedMoodType,
+          onHappyTap: () {
+            onSelected(0);
+          },
+          onSadTap: () {
+            onSelected(1);
+          },
+          onAngryTap: () {
+            onSelected(2);
+          },
+          onAnxietyTap: () {
+            onSelected(3);
+          },
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        AppElevatedButton(
+          buttonText: 'Go next',
+          height: 50,
+          onTap: () {
+            Navigator.of(context).pushNamed(AppRoutes.createMood, arguments: _selectedMoodType);
+          },
+          isActive: _selectedMoodType != -1,
+        ),
+      ],
+    );
+  }
 }
 
 class MoodsTileTable extends StatelessWidget {
@@ -245,7 +406,7 @@ class MoodsTileTable extends StatelessWidget {
           children: [
             Expanded(
                 child: MoodTile(
-              isActive: selectedItem == 0,
+              isActive: selectedItem == 0 || selectedItem == -1,
               assetPath: AppIcons.happy,
               text: 'Happy',
               color: AppColors.yellow,
@@ -256,7 +417,7 @@ class MoodsTileTable extends StatelessWidget {
             ),
             Expanded(
                 child: MoodTile(
-              isActive: selectedItem == 1,
+              isActive: selectedItem == 1 || selectedItem == -1,
               assetPath: AppIcons.sad,
               text: 'Sad',
               color: AppColors.purple,
@@ -271,7 +432,7 @@ class MoodsTileTable extends StatelessWidget {
           children: [
             Expanded(
                 child: MoodTile(
-              isActive: selectedItem == 2,
+              isActive: selectedItem == 2 || selectedItem == -1,
               assetPath: AppIcons.angry,
               text: 'Angry',
               color: AppColors.red,
@@ -282,7 +443,7 @@ class MoodsTileTable extends StatelessWidget {
             ),
             Expanded(
                 child: MoodTile(
-              isActive: selectedItem == 3,
+              isActive: selectedItem == 3 || selectedItem == -1,
               assetPath: AppIcons.anxiety,
               text: 'Anxiety',
               color: AppColors.green,
@@ -357,7 +518,7 @@ class WeekDayTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = DateUtils.dateOnly(DateTime.now());
     String iconPath = '';
     if (mood != null) {
       iconPath = switch (mood!.type) {
@@ -379,7 +540,7 @@ class WeekDayTile extends StatelessWidget {
                 MoodType.anxiety => AppColors.green,
               }
             : Colors.transparent,
-        border: Border.all(color: checkDates(date, now) ? AppColors.black : Colors.transparent),
+        border: Border.all(color: date == now ? AppColors.black : Colors.transparent),
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: Column(
@@ -406,8 +567,4 @@ class WeekDayTile extends StatelessWidget {
       ),
     );
   }
-}
-
-bool checkDates(DateTime first, DateTime second) {
-  return first.year == second.year && first.month == second.month && first.day == second.day;
 }
