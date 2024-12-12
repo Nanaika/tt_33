@@ -9,6 +9,7 @@ import 'package:tt33/bloc/moods_bloc.dart';
 import 'package:tt33/pages/about_us_page.dart';
 import 'package:tt33/pages/create_mood_page.dart';
 import 'package:tt33/pages/create_trigger_list_page.dart';
+import 'package:tt33/pages/exercise_page.dart';
 import 'package:tt33/pages/home_page.dart';
 import 'package:tt33/pages/onboarding_page.dart';
 import 'package:tt33/pages/splash_page.dart';
@@ -107,6 +108,10 @@ class MyApp extends StatelessWidget {
               settings: settings,
               builder: (context) => const AboutUsPage(),
             ),
+          AppRoutes.exercisePage => CupertinoPageRoute(
+            settings: settings,
+            builder: (context) => const ExercisePage(),
+          ),
           _ => null,
         },
         home: SplashPage(

@@ -6,4 +6,5 @@ abstract class AppRoutes {
   static const createMood = '/createMood';
   static const createTriggerList = '/createTriggerList';
   static const aboutUs = '/aboutUs';
+  static const exercisePage = '/exercisePage';
 }
